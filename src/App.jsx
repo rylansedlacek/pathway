@@ -18,8 +18,8 @@ export default function App() {
     const endLat = lat + offset;
     const endLon = lon + offset;
 
-    // use OSRM's demo server to get a walking route, but soon will use custom docker
-    const url = `https://router.project-osrm.org/route/v1/foot/${lon},${lat};${endLon},${endLat}?overview=full&geometries=geojson`;
+    const url = `http://localhost:5001/route/v1/foot/${lon},${lat};${endLon},${endLat}?overview=full&geometries=geojson`; // docker
+
 
     try {
       const res = await fetch(url);

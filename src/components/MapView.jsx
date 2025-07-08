@@ -27,7 +27,7 @@ export default function MapView({ route }) {
     );
   }, []);
 
-  const center = route?.[0] || userLocation || [40.73061, -73.935242]; // defaults to NYC, if no local
+  const center = route?.[0] || userLocation || [38.3004 , -77.4588]; // defaults to fred
 
   return (
     <MapContainer center={center} zoom={13} className="h-96 w-full"> 
