@@ -1,25 +1,37 @@
-/**
- * @author Rylan 
- * Displays the Map on the Home Screen, will soon be depreacted.
- */
-
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import startFlag from '../assets/start.png';
+import checkeredFlag from '../assets/finish.png';
 
-// helper to update map center
-function SetMapCenter({ coords }) { 
+function SetMapCenter({ coords }) {
   const map = useMap();
   useEffect(() => {
-    if (coords) map.setView(coords, 13); // dont ask why this works
+    if (coords?.length) map.setView(coords[0], 13);
   }, [coords, map]);
   return null;
 }
 
+// Icons FIXME
+const startIcon = new L.Icon({
+  iconUrl: startFlag,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
+// Icons 
+const endIcon = new L.Icon({
+  iconUrl: checkeredFlag,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+});
+
 export default function MapView({ route }) {
   const [userLocation, setUserLocation] = useState(null);
 
-  useEffect(() => { // this geo locates the user to show map
+  // Locates
+  useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
@@ -27,10 +39,15 @@ export default function MapView({ route }) {
     );
   }, []);
 
-  const center = route?.[0] || userLocation || [38.3004 , -77.4588]; // defaults to fred
+  const center = route?.[0] || userLocation || [38.3004, -77.4588];
 
+  // Returns the map and the draw on route we generate
   return (
-    <MapContainer center={center} zoom={13} className="h-96 w-full"> 
+    <MapContainer
+      center={center}
+      zoom={13}
+      className="h-80 w-full rounded border border-gray-300 shadow"
+    >
       <TileLayer
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -38,11 +55,11 @@ export default function MapView({ route }) {
       {userLocation && <Marker position={userLocation} />}
       {route && (
         <>
-          <Polyline positions={route} color="blue" /> {/* Draws */}
-          <Marker position={route[0]} />
+          <Polyline positions={route} color="blue" />
+          <Marker position={route[route.length - 1]} icon={endIcon} />
         </>
       )}
-      <SetMapCenter coords={center} />
+      <SetMapCenter coords={route} />
     </MapContainer>
   );
 }
