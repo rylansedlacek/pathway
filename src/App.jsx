@@ -38,11 +38,10 @@ export default function App() {
   const generateRoute = async ({ startCoords, distance, type }) => {
     const [lat, lon] = startCoords;
     const target = parseFloat(distance);
-    const radius = type === 'loop' ? target / (3 * Math.PI) : target / 2.1;
+    const radius = type === 'loop' ? target / (2.8 * Math.PI) : target / 2.1;
 
     let generatedRoutes = [];
     let attempts = 0;
-
 
     while (generatedRoutes.length < 5 && attempts < 3) {
       attempts++;
@@ -50,12 +49,14 @@ export default function App() {
         let coordsStr;
 
         if (type === 'loop') {
+          const wp = [];
           const baseBearing = Math.random() * 360;
-          const wp1 = offsetCoordinates(lat, lon, radius, baseBearing);
-          const wp2 = offsetCoordinates(lat, lon, radius, (baseBearing + 120) % 360);
-          const wp3 = offsetCoordinates(lat, lon, radius, (baseBearing + 240) % 360);
+          for (let j = 0; j < 4; j++) {
+            const bearing = baseBearing + j * 90 + (Math.random() * 10 - 5); 
+            wp.push(offsetCoordinates(lat, lon, radius, bearing));
+          }
+          coordsStr = `${lon},${lat};${wp.map(p => `${p[1]},${p[0]}`).join(';')};${lon},${lat}`;
 
-          coordsStr = `${lon},${lat};${wp1[1]},${wp1[0]};${wp2[1]},${wp2[0]};${wp3[1]},${wp3[0]};${lon},${lat}`;
         } else {
           const bearing = Math.random() * 360;
           const [midLat, midLon] = offsetCoordinates(lat, lon, radius, bearing);
@@ -67,17 +68,10 @@ export default function App() {
         try {
           const res = await fetch(url);
           const data = await res.json();
-
-          if (data.code !== 'Ok') {
-            continue;
-          }
+          if (data.code !== 'Ok') continue;
 
           const miles = data.routes[0].distance / 1609;
-          const rounded = miles.toFixed(2);
-
-          if (miles < target - 0.3 || miles > target + 0.5) {
-            continue;
-          }
+          if (miles < target - 0.3 || miles > target + 0.5) continue;
 
           const coords = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
           const finalCoords =
@@ -89,31 +83,34 @@ export default function App() {
             name: generateRouteName(),
             coords: finalCoords,
             type,
-            distance: rounded,
+            distance: miles.toFixed(2),
           });
 
         } catch (err) {
+          // continue on error
         }
       }
     }
+
     setRoutes(generatedRoutes);
     setActiveRouteIndex(0);
   };
 
+
   return (
-    <div className="min-h-screen w-375 bg-white text-gray-800 flex flex-col items-center p-4 md:p-8">
-      <h1 className="text-2xl md:text-4xl font-bold text-blue-600 mb-6">Pathway</h1>
-      <div className="w-max px-4 md:px-12 lg:px-24">
+    <div className="min-h-screen w-full max-w-screen-lg mx-auto bg-white text-gray-800 flex flex-col items-center p-4 md:p-8">
+      <h1 className="text-2xl md:text-5xl font-bold text-orange-600 mb-6">Aquila</h1>
+      <div className="w-full px-4 md:px-12 lg:px-24">
         <RouteForm onSubmit={generateRoute} />
         <div className="mt-6 grid md:grid-cols-[1fr_2fr] gap-6 items-start">
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {routes.map((r, i) => (
               <button
                 key={i}
                 onClick={() => setActiveRouteIndex(i)}
                 className={`w-full text-left p-3 rounded border transition ${i === activeRouteIndex
-                    ? 'bg-blue-100 border-blue-500'
-                    : 'border-gray-300 hover:bg-blue-50'
+                  ? 'bg-blue-100 border-blue-500'
+                  : 'border-gray-300 hover:bg-blue-50'
                   }`}
               >
                 <div className="font-semibold text-blue-600 text-sm md:text-base">{r.name}</div>
